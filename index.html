@@ -1,0 +1,25 @@
+<html>
+    <head>
+        <title>D'Little'a - kalkulator</title>
+        <link rel="stylesheet" href="style.css">
+    </head>
+    <body>
+        <script src="calculator.js"></script>
+        <div>
+            <h2>Legenda</h2>
+            <p>Wpisz liczbę, jeżeli to nieskończoność, wpisz M</p>
+            <input type="number" placeholder="rozmiar macierzy" id="inp-size">
+            <button onclick="resizeMatrix()">Zmień rozmiar</button>
+            <button onclick="generateInputTable()">Domyślna macierz</button>
+        </div>
+        <div class="input">
+            <table id="inp-matrix">
+            </table>
+        </div>
+        <button onclick="checkZerosInRowsAndCols()">Policz</button>
+        <button onclick="findSecondMinsInRowsAndCols()">Poszukaj drugich minimów</button>
+        <div id="response">
+
+        </div>
+    </body>
+</html>

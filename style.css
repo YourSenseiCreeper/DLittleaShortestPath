@@ -1,0 +1,38 @@
+table tbody td {
+    padding: 10px;
+}
+
+table, th, td {
+    border: 1px solid black;
+    border-collapse: collapse;
+}
+
+.input {
+    margin-top: 20px;
+}
+
+input {
+    width: 50px;
+}
+
+.extra-cell {
+    background-color: white;
+    color: red;
+    border: none;
+    font-weight: 400;
+}
+
+/* result matrix */
+/* tr td:last-child {
+    border: none;
+    border-bottom: none;
+    border-right: none;
+}
+
+tr {
+    border-right: none;
+}
+
+table {
+    border-right: none;
+} */
