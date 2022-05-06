@@ -5,6 +5,7 @@ var data = [
     [12, infinity, infinity, 1],
     [5, 3, 1, infinity],
 ]; // matrix
+var steps = []; // here we have all matricies through all steps
 var lb = 0;
 var size = 4;
 var path = []; // array of tuples (a,b) creating the path
@@ -127,6 +128,11 @@ function generateTable(elementId, bottomRow = null, lastCol = null) {
     element.innerHTML = innerHtml;
 }
 
+function _clone(object) {
+    let cloned = JSON.parse(JSON.stringify(object));
+    return object;
+}
+
 function checkZerosInRowsAndCols() {
     // check zeros in rows
     let subtractedInRows = [];
@@ -174,6 +180,7 @@ function checkZerosInRowsAndCols() {
         }
     }
     generateTable('response', subtractedInCols, subtractedInRows);
+    steps.push(_clone(data));
 }
 
 function findSecondMinsInRowsAndCols() {
@@ -213,6 +220,139 @@ function findSecondMinsInRowsAndCols() {
         secondMinsInCols.push(secondMinInCol);
     }
     generateTable('response', secondMinsInCols, secondMinsInRows);
+}
+
+function crossOutRowAndCol(rowNumber, colNumber) {
+    let newMatrix = [];
+    for (let i = 0; i < size; i++) {
+        for (let i = 0; i < size; i++) {
+            
+        }
+    }
+
+    size--; // downsize the matrix
+}
+
+// musimy działać na abstrakcji macierzy, a nie samej macierzy
+// przy wykreślaniu wierszy i kolumn podejście z klasyczną macierzą
+// zagubi się w nazywaniu wierszy i kolumn kiedy coś z niej usuniemy
+class CalculationMatrix {
+    
+    rows = [];
+    cols = [];
+    constructor(data) {
+
+    }
+
+    prepare(matrix) {
+        // rows
+        for (let i = 0; i < size; i++) {
+            let newRow = LineEntry(i, 0, size, i, i);
+            this.rows.push(newRow);
+        }
+        // colls
+        for (let i = 0; i < size; i++) {
+            let newCol = LineEntry(i, i, i, 0, size);
+            this.cols.push(newCol);      
+        }
+    }
+
+    crossOutRow(rowLabel) {
+        let rowIndex = this.rows.find(r => r._label == rowLabel);
+        // powinniśmy raczej dodać mu wszystkie skipped entries, tak żeby nie można było po nim przeiterować
+        // this.rows.splice(rowIndex, 1); // remove element
+
+        rows[rowIndex].setIsCrossedOut(true);
+        // aktualizacja kolumn
+        for (let i = 0; i < cols.length; i++) {
+            cols[i].addToSkipped(rowIndex);
+        }
+
+        // return rowIndex
+    }
+
+    crossOutCol(colIndex) {
+
+    }
+
+    preparePrintMatrix(matrix) {
+        let printMatrix = [];
+        // do-while
+        let hasNextElement = true;
+        let rowIndex = 0;
+        let colIndex = 0;
+        let newMatrixRow = [];
+        do {
+            let row = this.rows[rowIndex];
+            if (row._crossedOut) {
+                printMatrix.push(newMatrixRow);
+                newMatrixRow = [];
+                rowIndex++;
+                if (rowIndex > this.rows.length - 1) {
+                    hasNextElement = false;
+                    break;
+                }
+                continue;
+            }
+            let col = this.cols[colIndex];
+            if (col._crossedOut) {
+                colIndex++;
+                if (colIndex > this.cols.length-1) {
+                    colIndex = 0;
+                }
+                continue;
+            }
+
+            newMatrixRow.push(matrix[rowIndex][colIndex]); // tu powinna być zamiana infinity na M 
+            colIndex++;
+            if (colIndex > this.cols.length - 1) {
+                colIndex = 0;
+                printMatrix.push(newMatrixRow);
+                newMatrixRow = [];
+
+                rowIndex++;
+                if (rowIndex > this.rows.length - 1) {
+                    break; // doszliśmy do końca macierzy
+                }
+            }
+        } while(hasNextElement);
+        return printMatrix;
+    }
+}
+
+class LineEntry {
+
+    _label = '1';
+    _xIndexStart = 0;
+    _xIndexEnd = 0;
+    _yIndexStart = 0;
+    _yIndexEnd = 0;
+    _skippedEntries = []; // indeksy komórek z usuniętych wierszy / kolumn (przydatne przy findSecondMin oraz findZeros)
+    _crossedOut = false;
+    constructor(label, xIndexStart, xIndexEnd, yIndexStart, yIndexEnd) {
+        this._label = label;
+        this._xIndexStart = xIndexStart;
+        this._xIndexEnd = xIndexEnd;
+        this._yIndexStart = yIndexStart;
+        this._yIndexEnd = yIndexEnd;
+    }
+
+    findSecondMin(matrix) {
+
+    }
+
+    findZeros(matrix) {
+
+    }
+
+    addToSkipped(indexValue) {
+        // można dodać sprawdzanie czy element się znajduje w tablicy, ale nie trzeba
+        this._skippedEntries.push(indexValue);
+    }
+
+    setIsCrossedOut() {
+        this._crossedOut = true;
+    }
 }
 
 
