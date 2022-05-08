@@ -238,22 +238,43 @@ function crossOutRowAndCol(rowNumber, colNumber) {
 // zagubi się w nazywaniu wierszy i kolumn kiedy coś z niej usuniemy
 class CalculationMatrix {
     
-    rows = [];
-    cols = [];
-    constructor(data) {
+    _rows = [];
+    _cols = [];
+    _matrix = [];
 
-    }
-
-    prepare(matrix) {
+    constructor(matrix) {
+        this._matrix = matrix;
         // rows
         for (let i = 0; i < size; i++) {
             let newRow = LineEntry(i, 0, size, i, i);
-            this.rows.push(newRow);
+            this._rows.push(newRow);
         }
         // colls
         for (let i = 0; i < size; i++) {
             let newCol = LineEntry(i, i, i, 0, size);
-            this.cols.push(newCol);      
+            this._cols.push(newCol);      
+        }
+
+        this._matrix = matrix;
+    }
+
+    findSecondMins() {
+        for (const row of this._rows) {
+            row.findSecondMin(this._matrix);
+        }
+
+        for (const col of this._cols) {
+            col.findSecondMin(this._matrix);
+        }
+    }
+
+    findZerosOrRecalculate() {
+        for (const row of this._rows) {
+            row.findZeros(this._matrix);
+        }
+
+        for (const col of this._cols) {
+            col.findZeros(this._matrix);
         }
     }
 
@@ -338,11 +359,37 @@ class LineEntry {
     }
 
     findSecondMin(matrix) {
-
+        let min = infinity;
+        let secondMin = infinity;
+        for (let i = this._yIndexStart; i < this._yIndexEnd; i++) {
+            for (let j = this._xIndexStart; j < this._xIndexEnd; j++) {
+                if (min > matrix[i][j]) {
+                    if (min < infinity) {
+                        secondMin = min;
+                    }
+                    min = matrix[i][j];
+                }
+            }       
+        }
+        return secondMin;
     }
 
     findZeros(matrix) {
+        let min = infinity;
+        for (let i = this._yIndexStart; i < this._yIndexEnd; i++) {
+            for (let j = this._xIndexStart; j < this._xIndexEnd; j++) {
+                if (min > matrix[i][j]) min = matrix[i][j];
+            }       
+        }
 
+        if (min > 0 && min !== infinity) {
+            for (let i = this._yIndexStart; i < this._yIndexEnd; i++) {
+                for (let j = this._xIndexStart; j < this._xIndexEnd; j++) {
+                    if (matrix[i][j] !== infinity) matrix[i][j] -= min;
+                }       
+            }
+        }
+        return min;
     }
 
     addToSkipped(indexValue) {
