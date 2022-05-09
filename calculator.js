@@ -9,6 +9,7 @@ var steps = []; // here we have all matricies through all steps
 var lb = 0;
 var size = 4;
 var path = []; // array of tuples (a,b) creating the path
+var calculationMatrix = null;
 
 function basicFillMatrix() {
     data = [];
@@ -28,27 +29,14 @@ function basicFillMatrix() {
 function resizeMatrix() {
     size = document.getElementById('inp-size').value;
     basicFillMatrix();
+    calculationMatrix = new CalculationMatrix(data);
     generateInputTable();
-}
-
-function remapDataToInput() {
-    let outputMatix = [];
-    for (let i = 0; i < size; i++) {
-        let row = [];
-        for (let j = 0; j < size; j++) {
-            if (data[i][j] == infinity)
-                row.push('M');
-            else
-                row.push(data[i][j]);
-        }
-        outputMatix.push(row);
-    };
-    return outputMatix;
 }
 
 function generateInputTable() {
     let innerHtml = generateHeader() + generateBody(data, true);
     document.getElementById('inp-matrix').innerHTML = innerHtml;
+    calculationMatrix = new CalculationMatrix(data);
 }
 
 function generateHeader() {
@@ -88,9 +76,48 @@ function generateBody(inputData, generateIds, bottomRow = null, lastCol = null) 
     return rowHtml;
 }
 
+function generateNewTable(generateIds, bottomRow = null, lastCol = null) {
+    let printMatrix = calculationMatrix.preparePrintMatrix();
+    let cols = printMatrix[0].length;
+    let rows = printMatrix.length;
+
+    let tableHtml = "<thead><th></th>";
+    for (let i = 0; i < cols; i++) {
+        tableHtml += `<th>${printMatrix[0][i]}</th>`;
+    }
+    tableHtml += "</thead>";
+
+    tableHtml += "<tbody>";
+    for (let i = 1; i < rows; i++) {
+        tableHtml += `<tr><td><b>${printMatrix[i][0]}</b></td>`;
+        for (let j = 1; j < cols; j++) { // skip first collumn
+            let idsText = generateIds ? `id="i-${i}${j}"` : '';
+            if (i == j || printMatrix[i][j] == infinity) {
+                tableHtml += `<td><input type="text" value="M" ${idsText} disabled></td>`;
+            } else {
+                tableHtml += `<td><input type="text" value="${printMatrix[i][j]}" ${idsText}"></td>`;
+            }     
+        }
+        if (!!lastCol) {
+            tableHtml += `<td><input type="text" class="extra-cell" value="${lastCol[i]}" disabled></td>`; 
+        }
+        tableHtml += "</tr>";
+    }
+    if (!!bottomRow) {
+        tableHtml += `<tr><td></td>`
+        for (let i = 0; i < size; i++) {
+            tableHtml += `<td><input type="text" class="extra-cell" value="${bottomRow[i]}" disabled></td>`;    
+        }
+        tableHtml += "</tr>";
+    }
+    tableHtml += "</tbody>";
+    return tableHtml;
+}
+
 
 // todo
 function remapDataToOutput() {
+    let test = calculationMatrix.preparePrintMatrix();
     let outputMatix = [];
     for (let i = 0; i < size; i++) {
         let row = [];
@@ -122,104 +149,103 @@ function remapInputToData() {
 }
 
 function generateTable(elementId, bottomRow = null, lastCol = null) {
-    let mappedData = remapDataToOutput();
-    let innerHtml = '<table>' + generateHeader() + generateBody(mappedData, false, bottomRow, lastCol) + '</table>';
+    // let mappedData = remapDataToOutput();
+    let innerHtml = '<table>' + generateNewTable(false, bottomRow, lastCol) + '</table>';
     let element = document.getElementById(elementId);
     element.innerHTML = innerHtml;
 }
 
-function _clone(object) {
-    let cloned = JSON.parse(JSON.stringify(object));
-    return object;
-}
-
 function checkZerosInRowsAndCols() {
-    // check zeros in rows
-    let subtractedInRows = [];
-    let subtractedInCols = [];
+    let [colSubtractions, rowSubtractions] = calculationMatrix.findZerosOrRecalculate();
 
-    data = remapInputToData();
-    for (let i = 0; i < size; i++) {
-        let minInRow = infinity;
-        for (let j = 0; j < size; j++) {
-            if (minInRow > data[i][j]) {
-                minInRow = data[i][j]; 
-            }
-        }
+    // // check zeros in rows
+    // let subtractedInRows = [];
+    // let subtractedInCols = [];
 
-        // nie nieskończoność i większe od 0 - odejmowanie od pozostałych
-        if (minInRow < infinity && minInRow > 0) {
-            lb += minInRow;
-            subtractedInRows.push(minInRow);
-            for (let j = 0; j < size; j++) {
-                if (data[i][j] !== infinity) data[i][j] -= minInRow; 
-            }
-        } else {
-            subtractedInRows.push(0);
-        }
-    }
+    // data = remapInputToData();
+    // for (let i = 0; i < size; i++) {
+    //     let minInRow = infinity;
+    //     for (let j = 0; j < size; j++) {
+    //         if (minInRow > data[i][j]) {
+    //             minInRow = data[i][j]; 
+    //         }
+    //     }
 
-    // check zeros in cols
-    for (let i = 0; i < size; i++) {
-        let minInCol = infinity;
-        for (let j = 0; j < size; j++) {
-            if (minInCol > data[j][i]) {
-                minInCol = data[j][i];
-            }
-        }
+    //     // nie nieskończoność i większe od 0 - odejmowanie od pozostałych
+    //     if (minInRow < infinity && minInRow > 0) {
+    //         lb += minInRow;
+    //         subtractedInRows.push(minInRow);
+    //         for (let j = 0; j < size; j++) {
+    //             if (data[i][j] !== infinity) data[i][j] -= minInRow; 
+    //         }
+    //     } else {
+    //         subtractedInRows.push(0);
+    //     }
+    // }
 
-        // nie nieskończoność i większe od 0 - odejmowanie od pozostałych
-        if (minInCol < infinity && minInCol > 0) {
-            lb += minInCol;
-            subtractedInCols.push(minInCol);        
-            for (let j = 0; j < size; j++) {
-                if (data[j][i] !== infinity) data[j][i] -= minInCol; 
-            }
-        } else {
-            subtractedInCols.push(0);
-        }
-    }
-    generateTable('response', subtractedInCols, subtractedInRows);
-    steps.push(_clone(data));
+    // // check zeros in cols
+    // for (let i = 0; i < size; i++) {
+    //     let minInCol = infinity;
+    //     for (let j = 0; j < size; j++) {
+    //         if (minInCol > data[j][i]) {
+    //             minInCol = data[j][i];
+    //         }
+    //     }
+
+    //     // nie nieskończoność i większe od 0 - odejmowanie od pozostałych
+    //     if (minInCol < infinity && minInCol > 0) {
+    //         lb += minInCol;
+    //         subtractedInCols.push(minInCol);        
+    //         for (let j = 0; j < size; j++) {
+    //             if (data[j][i] !== infinity) data[j][i] -= minInCol; 
+    //         }
+    //     } else {
+    //         subtractedInCols.push(0);
+    //     }
+    // }
+    generateTable('response', colSubtractions, rowSubtractions);
+    // gdzieś dalej trzeba zrobić wykreślanie
+    // steps.push(_clone(data));
 }
 
 function findSecondMinsInRowsAndCols() {
-    // check zeros in rows
-    let secondMinsInRows = [];
-    let secondMinsInCols = [];
+    let [colSecondMins, rowSecondMins] = calculationMatrix.findSecondMins();
+    // // check zeros in rows
+    // let secondMinsInRows = [];
+    // let secondMinsInCols = [];
 
-    // data = remapInputToData(); // remapping is no longer needed
-    for (let i = 0; i < size; i++) {
-        let minInRow = infinity;
-        let secondMinInRow = infinity;
-        for (let j = 0; j < size; j++) {
-            if (minInRow >= data[i][j]) {
-                if (minInRow < infinity) {
-                    secondMinInRow = minInRow;
-                }
-                minInRow = data[i][j];
-            }
-        }
+    // // data = remapInputToData(); // remapping is no longer needed
+    // for (let i = 0; i < size; i++) {
+    //     let minInRow = infinity;
+    //     let secondMinInRow = infinity;
+    //     for (let j = 0; j < size; j++) {
+    //         if (minInRow >= data[i][j]) {
+    //             if (minInRow < infinity) {
+    //                 secondMinInRow = minInRow;
+    //             }
+    //             minInRow = data[i][j];
+    //         }
+    //     }
 
-        secondMinsInRows.push(secondMinInRow);
-    }
+    //     secondMinsInRows.push(secondMinInRow);
+    // }
 
-    // check zeros in cols
-    for (let i = 0; i < size; i++) {
-        let minInCol = infinity;
-        let secondMinInCol = infinity;
-        for (let j = 0; j < size; j++) {
-            if (minInCol >= data[j][i]) {
-                if (minInCol < infinity) {
-                    secondMinInCol = minInCol;
-                }
-                minInCol = data[j][i];
-            }
-        }
+    // // check zeros in cols
+    // for (let i = 0; i < size; i++) {
+    //     let minInCol = infinity;
+    //     let secondMinInCol = infinity;
+    //     for (let j = 0; j < size; j++) {
+    //         if (minInCol >= data[j][i]) {
+    //             if (minInCol < infinity) {
+    //                 secondMinInCol = minInCol;
+    //             }
+    //             minInCol = data[j][i];
+    //         }
+    //     }
 
-        secondMinsInCols.push(secondMinInCol);
-    }
-    generateTable('response', secondMinsInCols, secondMinsInRows);
+    //     secondMinsInCols.push(secondMinInCol);
+    // }
+    generateTable('response', colSecondMins, rowSecondMins);
 }
 
 function crossOutRowAndCol(rowNumber, colNumber) {
@@ -246,12 +272,12 @@ class CalculationMatrix {
         this._matrix = matrix;
         // rows
         for (let i = 0; i < size; i++) {
-            let newRow = LineEntry(i, 0, size, i, i);
+            let newRow = new LineEntry(i, 0, size, i, i+1);
             this._rows.push(newRow);
         }
         // colls
         for (let i = 0; i < size; i++) {
-            let newCol = LineEntry(i, i, i, 0, size);
+            let newCol = new LineEntry(i, i, i+1, 0, size);
             this._cols.push(newCol);      
         }
 
@@ -259,23 +285,30 @@ class CalculationMatrix {
     }
 
     findSecondMins() {
+        let rowSecondMins = [];
+        let colSecondMins = [];
+
         for (const row of this._rows) {
-            row.findSecondMin(this._matrix);
+            rowSecondMins.push(row.findSecondMin(this._matrix));
         }
 
         for (const col of this._cols) {
-            col.findSecondMin(this._matrix);
+            colSecondMins.push(col.findSecondMin(this._matrix));
         }
+        return [colSecondMins, rowSubtractions];
     }
 
     findZerosOrRecalculate() {
+        let rowSubtractions = [];
+        let colSubtractions = [];
         for (const row of this._rows) {
-            row.findZeros(this._matrix);
+            rowSubtractions.push(row.findZerosOrSubtract(this._matrix));
         }
 
         for (const col of this._cols) {
-            col.findZeros(this._matrix);
+            colSubtractions.push(col.findZerosOrSubtract(this._matrix));
         }
+        return [colSubtractions, rowSubtractions];
     }
 
     crossOutRow(rowLabel) {
@@ -296,43 +329,61 @@ class CalculationMatrix {
 
     }
 
-    preparePrintMatrix(matrix) {
+    preparePrintMatrix() {
         let printMatrix = [];
         // do-while
         let hasNextElement = true;
         let rowIndex = 0;
         let colIndex = 0;
         let newMatrixRow = [];
+
+        // header row
+        // blank cell in left corner
+        newMatrixRow.push('');
+        for (let i = 0; i < size; i++) {
+            if (!this._cols._crossedOut) {
+                newMatrixRow.push(i);
+            }
+        }
+        printMatrix.push(newMatrixRow);
+        newMatrixRow = [];
+
         do {
-            let row = this.rows[rowIndex];
+            let row = this._rows[rowIndex];
             if (row._crossedOut) {
-                printMatrix.push(newMatrixRow);
+                printMatrix.push(newMatrixRow); // risky, to będzie powodować problemy
                 newMatrixRow = [];
                 rowIndex++;
-                if (rowIndex > this.rows.length - 1) {
+                if (rowIndex > this._rows.length - 1) {
                     hasNextElement = false;
                     break;
                 }
                 continue;
             }
-            let col = this.cols[colIndex];
+            let col = this._cols[colIndex];
             if (col._crossedOut) {
                 colIndex++;
-                if (colIndex > this.cols.length-1) {
+                if (colIndex > this._cols.length-1) {
                     colIndex = 0;
                 }
                 continue;
             }
 
-            newMatrixRow.push(matrix[rowIndex][colIndex]); // tu powinna być zamiana infinity na M 
+            if (colIndex == 0) {
+                newMatrixRow.push(colIndex); // row header
+            }
+
+            let cellValue = this._matrix[rowIndex][colIndex] == infinity ? 'M' : String(this._matrix[rowIndex][colIndex]);
+            newMatrixRow.push(cellValue);
             colIndex++;
-            if (colIndex > this.cols.length - 1) {
+            if (colIndex > this._cols.length - 1) {
                 colIndex = 0;
                 printMatrix.push(newMatrixRow);
                 newMatrixRow = [];
 
                 rowIndex++;
-                if (rowIndex > this.rows.length - 1) {
+                if (rowIndex > this._rows.length - 1) {
+                    hasNextElement = false;
                     break; // doszliśmy do końca macierzy
                 }
             }
@@ -374,7 +425,7 @@ class LineEntry {
         return secondMin;
     }
 
-    findZeros(matrix) {
+    findZerosOrSubtract(matrix) {
         let min = infinity;
         for (let i = this._yIndexStart; i < this._yIndexEnd; i++) {
             for (let j = this._xIndexStart; j < this._xIndexEnd; j++) {
